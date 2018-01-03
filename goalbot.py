@@ -1,7 +1,6 @@
 import praw
-import re
-import time
 import sqlite3
+import time
 
 REPLY_FOOTER = '''___\n\n^^[About](https://redd.it/7kfrvj)
 ^^| ^^[Creator](https://reddit.com/u/MUFColin)/[Twitter](https://twitter.com/MUFColin) ^^| ^^[Feedback](/r/goalbot)'''
@@ -13,52 +12,54 @@ def authenticate():
 
     return reddit
 
-
 def get_urls(query):
     query = query.split(',')
 
+    if(len(query) < 2):
+        return ''
+    
     parameters = []
-    #sSQL = 'SELECT GfyID, Player, Competition, Season FROM Goals WHERE PlayerID=(SELECT PlayerID FROM Players WHERE FullName LIKE ?)'
-    sSQL = 'SELECT GfyID, Player, Competition, Season FROM Goals WHERE PlayerID=(SELECT PlayerID FROM Players WHERE '
 
+    sSQL = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4, Player, Competition, Season FROM Goals
+            WHERE PlayerID=(SELECT PlayerID FROM Players
+                            WHERE UPPER(?) IN (UPPER(DistinctFirst), UPPER(DistinctLast), UPPER(AltName1), UPPER(AltName2), UPPER(FullName)))'''
+    
     player_name = query[0].strip()
-
-    #x = player_name.split(' ')
-    # if(len(x) > 1):
-    #     first_name = x[0]
-    #     last_name = ' '.join(x[1:])
-        #sSQL += ('First LIKE ? AND Last LIKE ?')
-    sSQL += 'UPPER(?) IN (UPPER(DistinctFirst), UPPER(DistinctLast), UPPER(AltName1), UPPER(AltName2), UPPER(FullName)))'
     parameters.append(player_name)
 
 
     if(query[1]):
         opponent = query[1].strip()
-        sSQL += ' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(SELECT TeamID FROM Teams WHERE '
+        sSQL += ''' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(
+            SELECT TeamID FROM Teams WHERE UPPER(?) IN (Acronym, UPPER(FullName), UPPER(ShortName1), UPPER(ShortName2), UPPER(ShortName3))))'''
 
-        if(opponent.isupper()):
-            sSQL += 'Acronym=?)'
-        else:
-            sSQL += 'UPPER(?) IN (UPPER(FullName), UPPER(ShortName1), UPPER(ShortName2), UPPER(ShortName3)))'
+##        if(opponent.isupper()):
+##            sSQL += 'Acronym=?)'
+##        else:
+##            sSQL += 'UPPER(?) IN (UPPER(FullName), UPPER(ShortName1), UPPER(ShortName2), UPPER(ShortName3)))'
         parameters.append(opponent)
-
-    # if(query[2]):
-    #     comp = query[2]
-    #     sSQL += ' AND Competition=(SELECT actual_name from Competitions. . . '
-    # if (query[3]):
-    #     comp = query[2]
-    #     sSQL += ' '
-
-    sSQL += ');'
+        
+    if 0 <= 2 < len(query):
+        season = '%' + query[2].strip() + '%'
+        sSQL += ' AND Season LIKE ?'
+        parameters.append(season)
+    
+    sSQL += ';'
+    
     con = sqlite3.connect('bot.db')
     c = con.cursor()
-    #print('sql: {}'.format(sSQL))
-    ids = c.execute(sSQL, tuple(parameters))
+    
+    rows = c.execute(sSQL, tuple(parameters))
 
     reply = ''
-    for row in ids:
-        reply += '[{}: {}, {}](https://gfycat.com/{})\n\n'.format(row[1], row[2], row[3], row[0])
-
+    for row in rows:
+        #reply += '[{}: {}, {}](https://gfycat.com/{})\n\n'.format(row[1], row[2], row[3], row[0])
+        reply += '[{}: {} ({})](https://gfycat.com/{})'.format(row[5], row[6], row[7], row[0])
+        for angle in range(1,5):
+            if(row[angle]):
+                reply += ', [Alt{}](https://gfycat.com/{})'.format(angle, row[angle])
+        reply += '\n\n'
+        
     if not reply:
         return ''
 
@@ -68,7 +69,6 @@ def get_urls(query):
 def run_bot(reddit):
     print('Getting comments')
 
-    #for comment in reddit.subreddit('mufcolin').comments(limit = 10):
     for comment in reddit.subreddit('reddevils+mufcolin+goalbot').stream.comments():
         #match = re.findall('^!goalbot\s', comment.body)
         start_index = comment.body.find('!goalbot ')
@@ -82,19 +82,15 @@ def run_bot(reddit):
             if comment.id not in seen_comments:
                 try:
                     print('new comment')
-                    #lookup in sqlite
                     query = comment.body[start_index + 9:]    #len('!goalbot ') == 9
                     print('query: {}'.format(query))
                     reply = get_urls(query)
 
-                except Exception as e:
+                except Exception as e:  #fix
                     print(e)
-                    #print('failed for some reason') #fix
 
                 else:
                     if(reply != ''):
-                        
-                            
                         print('reply: {}'.format(reply))
                         comment.reply(reply)
                         print('reply made')
@@ -111,11 +107,6 @@ def run_bot(reddit):
                         print('no matching ids found')
             else:
                 print('seen')
-        # print('waiting 20 seconds')
-        # time.sleep(20)
-
-    print('waiting 30 seconds')
-    time.sleep(30)
 
 def main():
     reddit = authenticate()

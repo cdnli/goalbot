@@ -1,6 +1,6 @@
+import time
 import praw
 import sqlite3
-import time
 
 REPLY_FOOTER = '''___\n\n^^[About](https://redd.it/7kfrvj)
 ^^| ^^[Creator](https://reddit.com/u/MUFColin)/[Twitter](https://twitter.com/MUFColin) ^^| ^^[Feedback](/r/goalbot)'''
@@ -12,10 +12,11 @@ def authenticate():
 
     return reddit
 
+
 def get_urls(query):
     query = query.split(',')
 
-    if(len(query) < 2):
+    if(len(query) < 2 and query[0] != 'random'):
         return ''
     
     parameters = []
@@ -28,7 +29,8 @@ def get_urls(query):
     parameters.append(player_name)
 
 
-    if(query[1]):
+    #if(query[1]):
+    if 0 <= 1 < len(query):
         opponent = query[1].strip()
         sSQL += ''' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(
             SELECT TeamID FROM Teams WHERE UPPER(?) IN (Acronym, UPPER(FullName), UPPER(ShortName1), UPPER(ShortName2), UPPER(ShortName3))))'''
@@ -43,8 +45,17 @@ def get_urls(query):
         season = '%' + query[2].strip() + '%'
         sSQL += ' AND Season LIKE ?'
         parameters.append(season)
-    
+
+        
     sSQL += ';'
+
+    if(query[0] == 'random'):
+        sSQL = '''select GfyID, AltGfy1, AltGfy2, AltGfy3,
+                AltGfy4, Player, Competition, Season
+                from goals order by random() limit 3;'''
+        parameters = []
+
+
     
     con = sqlite3.connect('bot.db')
     c = con.cursor()
@@ -74,8 +85,8 @@ def run_bot(reddit):
         start_index = comment.body.find('!goalbot ')
 
         if (start_index != -1):
-            print('found comment id: {}'.format(comment.id))
-
+            print('found comment: {}'.format(comment.permalink))
+            
             with open('commented.txt', 'r') as outfile:
                 seen_comments = outfile.read().splitlines()
 

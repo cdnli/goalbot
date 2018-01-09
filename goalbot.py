@@ -1,6 +1,6 @@
-import time
 import praw
 import sqlite3
+from time import sleep
 
 REPLY_FOOTER = '''___\n\n^^[About](https://redd.it/7kfrvj)
 ^^| ^^[Creator](https://reddit.com/u/MUFColin)/[Twitter](https://twitter.com/MUFColin) ^^| ^^[Feedback](/r/goalbot)'''
@@ -35,10 +35,6 @@ def get_urls(query):
         sSQL += ''' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(
             SELECT TeamID FROM Teams WHERE UPPER(?) IN (Acronym, UPPER(FullName), UPPER(ShortName1), UPPER(ShortName2), UPPER(ShortName3))))'''
 
-##        if(opponent.isupper()):
-##            sSQL += 'Acronym=?)'
-##        else:
-##            sSQL += 'UPPER(?) IN (UPPER(FullName), UPPER(ShortName1), UPPER(ShortName2), UPPER(ShortName3)))'
         parameters.append(opponent)
         
     if 0 <= 2 < len(query):
@@ -102,27 +98,39 @@ def run_bot(reddit):
 
                 else:
                     if(reply != ''):
-                        print('reply: {}'.format(reply))
-                        comment.reply(reply)
-                        print('reply made')
+                        #print('reply: {}'.format(reply))
+                        try:
+                            comment.reply(reply)
+                            print('reply made')
 
-                        with open('commented.txt', 'a+') as outfile:
-                            outfile.write(comment.id + '\n')
+                            with open('commented.txt', 'a+') as outfile:
+                                outfile.write(comment.id + '\n')
 
-                        print('waiting 20 seconds')
-                        time.sleep(20)
+                            print('waiting 20 seconds')
+                            print('***********************')
+                            sleep(20)
+                            
+                        except praw.exceptions.APIException as api_exception:
+                            print(api_exception)
+                            
                         
                     else:
                         with open('non-working.txt', 'a+') as errout:
                             errout.write('id: {}, query: {}\n'.format(comment.id, query))
                         print('no matching ids found')
+                        print('***********************')
             else:
                 print('seen')
 
 def main():
     reddit = authenticate()
     while True:
-        run_bot(reddit)
+        try:
+            run_bot(reddit)
+        except prawcore.exceptions.ServerError as http_error:
+            print(http_error)
+            print('waiting 2 minutes') #reduce server load
+            sleep(120)
 
 if __name__ == '__main__':
     main()

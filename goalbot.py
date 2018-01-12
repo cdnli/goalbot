@@ -3,8 +3,7 @@ import sqlite3
 from time import sleep
 
 REPLY_FOOTER = '''___\n\n^^[About](https://redd.it/7kfrvj)
-^^| ^^[Creator](https://reddit.com/u/MUFColin)/
-[Twitter](https://twitter.com/MUFColin) ^^| ^^[Feedback](/r/goalbot)'''
+^^| ^^[Creator](https://reddit.com/u/MUFColin)/[Twitter](https://twitter.com/MUFColin) ^^| ^^[Feedback](/r/goalbot)'''
 
 
 def authenticate():

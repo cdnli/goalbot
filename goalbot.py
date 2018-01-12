@@ -3,7 +3,9 @@ import sqlite3
 from time import sleep
 
 REPLY_FOOTER = '''___\n\n^^[About](https://redd.it/7kfrvj)
-^^| ^^[Creator](https://reddit.com/u/MUFColin)/[Twitter](https://twitter.com/MUFColin) ^^| ^^[Feedback](/r/goalbot)'''
+^^| ^^[Creator](https://reddit.com/u/MUFColin)/
+[Twitter](https://twitter.com/MUFColin) ^^| ^^[Feedback](/r/goalbot)'''
+
 
 def authenticate():
     print('Authenticating')
@@ -18,7 +20,7 @@ def get_urls(query):
 
     if(len(query) < 2 and query[0] != 'random'):
         return ''
-    
+
     parameters = []
 
     sSQL = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4, Player, Competition, Season FROM Goals
@@ -27,7 +29,6 @@ def get_urls(query):
     
     player_name = query[0].strip()
     parameters.append(player_name)
-
 
     #if(query[1]):
     if 0 <= 1 < len(query):
@@ -41,8 +42,7 @@ def get_urls(query):
         season = '%' + query[2].strip() + '%'
         sSQL += ' AND Season LIKE ?'
         parameters.append(season)
-
-        
+ 
     sSQL += ';'
 
     if(query[0] == 'random'):
@@ -51,8 +51,6 @@ def get_urls(query):
                 from goals order by random() limit 3;'''
         parameters = []
 
-
-    
     con = sqlite3.connect('bot.db')
     c = con.cursor()
     
@@ -113,7 +111,6 @@ def run_bot(reddit):
                         except praw.exceptions.APIException as api_exception:
                             print(api_exception)
                             
-                        
                     else:
                         with open('non-working.txt', 'a+') as errout:
                             errout.write('id: {}, query: {}\n'.format(comment.id, query))
@@ -122,6 +119,7 @@ def run_bot(reddit):
             else:
                 print('seen')
 
+
 def main():
     reddit = authenticate()
     while True:
@@ -129,7 +127,7 @@ def main():
             run_bot(reddit)
         except prawcore.exceptions.ServerError as http_error:
             print(http_error)
-            print('waiting 2 minutes') #reduce server load
+            print('waiting 2 minutes')  #reduce server load
             sleep(120)
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ def authenticate():
 def get_urls(query):
     query = query.split(',')
 
-    if(len(query) < 2 and query[0] != 'random'):
+    if(len(query) < 2 and query[0].strip() != 'random'):
         return ''
 
     parameters = []
@@ -45,7 +45,7 @@ def get_urls(query):
  
     sSQL += ';'
 
-    if(query[0] == 'random'):
+    if(query[0].strip() == 'random'):
         sSQL = '''select GfyID, AltGfy1, AltGfy2, AltGfy3,
                 AltGfy4, Player, Competition, Season
                 from goals order by random() limit 3;'''

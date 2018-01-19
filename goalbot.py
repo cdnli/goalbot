@@ -76,10 +76,14 @@ def run_bot(reddit):
 
     for comment in reddit.subreddit('reddevils+mufcolin+goalbot').stream.comments():
         #match = re.findall('^!goalbot\s', comment.body)
-        start_index = comment.body.find('!goalbot ')
+        body = comment.body
+        start_index = body.find('!goalbot ')
 
         if (start_index != -1):
             print('found comment: {}'.format(comment.permalink))
+
+##            body = body[start_index:]
+##            end_index = body.find('\n')
             
             with open('commented.txt', 'r') as outfile:
                 seen_comments = outfile.read().splitlines()
@@ -87,7 +91,12 @@ def run_bot(reddit):
             if comment.id not in seen_comments:
                 try:
                     print('new comment')
-                    query = comment.body[start_index + 9:]    #len('!goalbot ') == 9
+
+                    body = body[start_index+9:] #len('!goalbot ') == 9
+                    end_index = body.find('\n')
+                    
+                    query = body[:end_index]
+                    
                     print('query: {}'.format(query))
                     reply = get_urls(query)
 

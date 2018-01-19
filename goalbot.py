@@ -94,8 +94,10 @@ def run_bot(reddit):
 
                     body = body[start_index+9:] #len('!goalbot ') == 9
                     end_index = body.find('\n')
-                    
-                    query = body[:end_index]
+                    if end_index == -1:
+                        query = body
+                    else:
+                        query = body[:end_index]
                     
                     print('query: {}'.format(query))
                     reply = get_urls(query)

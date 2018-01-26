@@ -2,9 +2,10 @@ import praw
 import prawcore
 import sqlite3
 from time import sleep
+from datetime import datetime
 
 REPLY_FOOTER = '''___\n\n^^[About](https://redd.it/7kfrvj)
-^^| ^^[Creator](https://reddit.com/u/MUFColin)/[Twitter](https://twitter.com/MUFColin) ^^| ^^[Feedback](/r/goalbot)'''
+^^| ^^[Creator](https://reddit.com/u/MUFColin) ^^| ^^[Feedback](/r/goalbot) ^^| ^^[Donate](https://www.reddit.com/r/goalbot/wiki/donate)'''
 
 
 def authenticate():
@@ -115,7 +116,8 @@ def run_bot(reddit):
                             with open('commented.txt', 'a+') as outfile:
                                 outfile.write(comment.id + '\n')
 
-                            print('waiting 20 seconds')
+                            #print('waiting 20 seconds')
+                            print(str(datetime.now().time()))
                             print('***********************')
                             sleep(20)
                             
@@ -124,7 +126,10 @@ def run_bot(reddit):
                             
                     else:
                         with open('non-working.txt', 'a+') as errout:
-                            errout.write('id: {}, query: {}\n'.format(comment.id, query))
+                            try:
+                                errout.write('id: {}, query: {}\n'.format(comment.id, query))
+                            except UnicodeEncodeError as unicode_error:
+                                print(unicode_error)
                         print('no matching ids found')
                         print('***********************')
             else:
@@ -140,6 +145,12 @@ def main():
             print(http_error)
             print('waiting 2 minutes')  #reduce server load
             sleep(120)
+        except prawcore.exceptions.ResponseException as response_error:
+            print(response_error)
+            print('waiting 2 minutes')
+            sleep(120)
+        except Exception as e:
+            print('error: {}'.format(e))
 
 if __name__ == '__main__':
     main()

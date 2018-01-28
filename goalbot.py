@@ -19,64 +19,49 @@ def authenticate():
     return reddit
 
 
-def get_urls(query):
-    query = query.split(',')
-
-    if len(query) < 2 and query[0].strip() != 'random':
-        return ''
-    ##        x = get_urls(','.join(query[0].split(' ')))
-    ##        if(x):
-    ##            return x
-    ##        else:
-    ##            return ''
-    ##
-    ##        return get_urls(','.join(query[0].split(' ')))
-    # return ''
-
-    parameters = []
-
+def get_urls(sql_query, parameters):
+    # query = query.split(',')
+    #
+    # if len(query) < 2 and query[0].strip() != 'random':
+    #     return ''
+    #
+    # parameters = []
+    #
     # sSQL = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4, Player, Competition, Season FROM Goals
-    #         WHERE PlayerID=(SELECT PlayerID FROM Players
-    #         WHERE UPPER(?) IN (UPPER(DistinctFirst), UPPER(DistinctLast), UPPER(AltName1), UPPER(AltName2), UPPER(FullName)))'''
-    sSQL = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4, Player, Competition, Season FROM Goals
-            WHERE PlayerID=(SELECT PlayerID FROM test_Players
-            WHERE test_Players MATCH (?))'''
+    #         WHERE PlayerID=(SELECT PlayerID FROM test_Players
+    #         WHERE test_Players MATCH (?))'''
+    #
+    # player_name = query[0].strip()
+    # parameters.append(player_name)
+    #
+    # # if(query[1]):
+    # if 0 <= 1 < len(query):
+    #     opponent = query[1].strip()
+    #     sSQL += ''' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(
+    #                 SELECT TeamID FROM test_Teams WHERE test_Teams MATCH (?)))'''
+    #
+    #     parameters.append(opponent)
+    #
+    # if 0 <= 2 < len(query):
+    #     season = '%' + query[2].strip() + '%'
+    #     sSQL += ' AND (Season LIKE ?)'
+    #     parameters.append(season)
+    #
+    # sSQL += ';'
+    #
+    # if query[0].strip() == 'random':
+    #     sSQL = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3,
+    #             AltGfy4, Player, Competition, Season
+    #             FROM Goals ORDER BY RANDOM() LIMIT 3;'''
+    #     parameters = []
 
-    player_name = query[0].strip()
-    parameters.append(player_name)
-
-    # if(query[1]):
-    if 0 <= 1 < len(query):
-        opponent = query[1].strip()
-        # sSQL += ''' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(
-        #     SELECT TeamID FROM Teams WHERE UPPER(?) IN (Acronym, UPPER(FullName), UPPER(ShortName1), UPPER(ShortName2), UPPER(ShortName3))))'''
-        sSQL += ''' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(
-                    SELECT TeamID FROM test_Teams WHERE test_Teams MATCH (?)))'''
-
-        parameters.append(opponent)
-
-    if 0 <= 2 < len(query):
-        season = '%' + query[2].strip() + '%'
-        sSQL += ' AND (Season LIKE ?)'
-        parameters.append(season)
-
-    sSQL += ';'
-
-    if query[0].strip() == 'random':
-        sSQL = '''select GfyID, AltGfy1, AltGfy2, AltGfy3,
-                AltGfy4, Player, Competition, Season
-                from goals order by random() limit 3;'''
-        parameters = []
-    
-    con = sqlite3.connect('bot.db')
-    
+    con = sqlite3.connect('F:/Dropbox/bot (7).db')
     c = con.cursor()
 
-    rows = c.execute(sSQL, tuple(parameters))
+    rows = c.execute(sql_query, tuple(parameters))
 
     reply = ''
     for row in rows:
-        # reply += '[{}: {}, {}](https://gfycat.com/{})\n\n'.format(row[1], row[2], row[3], row[0])
         reply += '[{}: {} ({})](https://gfycat.com/{})'.format(row[5], row[6], row[7], row[0])
         for angle in range(1, 5):
             if row[angle]:
@@ -89,20 +74,70 @@ def get_urls(query):
     reply += FOOTER
     return reply
 
+def parse_body(body):
+    start_index = body.find('!goalbot ')
+    body = body[start_index + 9:]    # len('!goalbot ') == 9
+    end_index = body.find('\n')
+
+    if end_index != -1:
+        body = body[:end_index]
+    # else:
+    #     query = body
+
+    query = body.split(',')
+
+    if len(query) < 2 and query[0].strip() != 'random':
+        query = body.split(' ', 1)
+        if len(query) > 1:
+            return query
+
+        return ''
+
+    return query
+
+def get_sql_items(user_query):
+    if user_query[0].strip() == 'random':
+        sql_query = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4, Player, Competition, Season
+                    FROM Goals ORDER BY RANDOM() LIMIT 3;'''
+        parameters = []
+
+        return sql_query, parameters
+
+    parameters = []
+
+    sql_query = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4, Player, Competition, Season FROM Goals
+                WHERE PlayerID=(SELECT PlayerID FROM test_Players
+                WHERE test_Players MATCH (?))'''
+
+    player_name = user_query[0].strip()
+    parameters.append(player_name)
+
+    # if(query[1]):
+    if 0 <= 1 < len(user_query):
+        opponent = user_query[1].strip()
+        sql_query += ''' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(
+                        SELECT TeamID FROM test_Teams WHERE test_Teams MATCH (?)))'''
+
+        parameters.append(opponent)
+
+    if 0 <= 2 < len(user_query):
+        season = '%' + user_query[2].strip() + '%'
+        sql_query += ' AND (Season LIKE ?)'
+        parameters.append(season)
+
+    sql_query += ';'
+
+    return sql_query, parameters
+
 
 def run_bot(reddit):
     print('Getting comments')
 
     for comment in reddit.subreddit('reddevils+mufcolin+goalbot').stream.comments():
-        # match = re.findall('^!goalbot\s', comment.body)
-        body = comment.body
-        start_index = body.find('!goalbot ')
+        body = comment.body.lower()
 
-        if (start_index != -1):
+        if '!goalbot ' in body:
             print('found comment: {}'.format(comment.permalink))
-
-            ##            body = body[start_index:]
-            ##            end_index = body.find('\n')
 
             with open('commented.txt', 'r') as outfile:
                 seen_comments = outfile.read().splitlines()
@@ -111,44 +146,61 @@ def run_bot(reddit):
                 try:
                     print('new comment')
 
-                    body = body[start_index + 9:]  # len('!goalbot ') == 9
-                    end_index = body.find('\n')
-                    if end_index == -1:
-                        query = body
-                    else:
-                        query = body[:end_index]
+                    user_query = parse_body(body)
 
-                    print('query: {}'.format(query))
-                    reply = get_urls(query)
+                    if not user_query:
+                        print('invalid user query')
+                        continue
+
+                    # body = body[start_index + len('!goalbot '):]  # len('!goalbot ') == 9
+                    # end_index = body.find('\n')
+                    # if end_index == -1:
+                    #     query = body
+                    # else:
+                    #     query = body[:end_index]
+
+                    print('user query: {}'.format(user_query))
+
+                    sql = get_sql_items(user_query)
+                    sql_query = sql[0]
+                    sql_parameters = sql[1]
+
+                    #reply = get_urls(user_query)
+                    reply = get_urls(sql_query, sql_parameters)
 
                 except Exception as e:  # fix
                     print(e)
 
                 else:
-                    if (reply != ''):
-                        # print('reply: {}'.format(reply))
+                    if reply:
+
                         try:
                             comment.reply(reply)
-                            print('reply made')
+                            print('reply made at {}'.format(str(datetime.now().time())))
 
                             with open('commented.txt', 'a+') as outfile:
                                 outfile.write(comment.id + '\n')
 
                             # print('waiting 20 seconds')
-                            print(str(datetime.now().time()))
+                            #print(str(datetime.now().time()))
                             print('***********************')
                             sleep(20)
 
                         except praw.exceptions.APIException as api_exception:
                             print(api_exception)
 
+                        except praw.exceptions.ClientException as client_exception:
+                            print(client_exception)
+
                     else:
-                        with open('non-working.txt', 'a+') as errout:
+                        with open('non-working.txt', 'a+') as err_out:
                             try:
-                                errout.write('id: {}, query: {}\n'.format(comment.id, query))
+                                err_out.write('id: {}, query: {}\n'.format(comment.id, user_query))
+
                             except UnicodeEncodeError as unicode_error:
                                 print(unicode_error)
-                        print('no matching ids found')
+
+                        print('no matching goals found')
                         print('***********************')
             else:
                 print('seen')

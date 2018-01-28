@@ -4,8 +4,11 @@ import sqlite3
 from time import sleep
 from datetime import datetime
 
-REPLY_FOOTER = '''___\n\n^^[About](https://redd.it/7kfrvj)
-^^| ^^[Creator](https://reddit.com/u/MUFColin) ^^| ^^[Feedback](/r/goalbot) ^^| ^^[Donate](https://www.reddit.com/r/goalbot/wiki/donate)'''
+FOOTER = '''___\n\n
+        ^^[About](https://redd.it/7kfrvj)
+        ^^| ^^[Creator](https://reddit.com/u/MUFColin) 
+        ^^| ^^[Feedback](/r/goalbot) 
+        ^^| ^^[Donate](https://www.reddit.com/r/goalbot/wiki/donate)'''
 
 
 def authenticate():
@@ -69,7 +72,7 @@ def get_urls(query):
     if not reply:
         return ''
 
-    reply += REPLY_FOOTER
+    reply += FOOTER
     return reply
 
 def run_bot(reddit):

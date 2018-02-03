@@ -4,6 +4,7 @@ import sqlite3
 from time import sleep
 from datetime import datetime
 
+
 FOOTER = '''___\n\n
 ^^[About](https://redd.it/7kfrvj)
 ^^| ^^[Creator](https://reddit.com/u/MUFColin) 

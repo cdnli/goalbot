@@ -5,10 +5,10 @@ from time import sleep
 from datetime import datetime
 
 FOOTER = '''___\n\n
-        ^^[About](https://redd.it/7kfrvj)
-        ^^| ^^[Creator](https://reddit.com/u/MUFColin) 
-        ^^| ^^[Feedback](/r/goalbot) 
-        ^^| ^^[Donate](https://www.reddit.com/r/goalbot/wiki/donate)'''
+^^[About](https://redd.it/7kfrvj)
+^^| ^^[Creator](https://reddit.com/u/MUFColin) 
+^^| ^^[Feedback](/r/goalbot) 
+^^| ^^[Donate](https://www.reddit.com/r/goalbot/wiki/donate)'''
 
 
 def authenticate():
@@ -20,42 +20,7 @@ def authenticate():
 
 
 def get_urls(sql_query, parameters):
-    # query = query.split(',')
-    #
-    # if len(query) < 2 and query[0].strip() != 'random':
-    #     return ''
-    #
-    # parameters = []
-    #
-    # sSQL = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4, Player, Competition, Season FROM Goals
-    #         WHERE PlayerID=(SELECT PlayerID FROM test_Players
-    #         WHERE test_Players MATCH (?))'''
-    #
-    # player_name = query[0].strip()
-    # parameters.append(player_name)
-    #
-    # # if(query[1]):
-    # if 0 <= 1 < len(query):
-    #     opponent = query[1].strip()
-    #     sSQL += ''' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(
-    #                 SELECT TeamID FROM test_Teams WHERE test_Teams MATCH (?)))'''
-    #
-    #     parameters.append(opponent)
-    #
-    # if 0 <= 2 < len(query):
-    #     season = '%' + query[2].strip() + '%'
-    #     sSQL += ' AND (Season LIKE ?)'
-    #     parameters.append(season)
-    #
-    # sSQL += ';'
-    #
-    # if query[0].strip() == 'random':
-    #     sSQL = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3,
-    #             AltGfy4, Player, Competition, Season
-    #             FROM Goals ORDER BY RANDOM() LIMIT 3;'''
-    #     parameters = []
-
-    con = sqlite3.connect('F:/Dropbox/bot (7).db')
+    con = sqlite3.connect('bot.db')
     c = con.cursor()
 
     rows = c.execute(sql_query, tuple(parameters))
@@ -81,8 +46,6 @@ def parse_body(body):
 
     if end_index != -1:
         body = body[:end_index]
-    # else:
-    #     query = body
 
     query = body.split(',')
 
@@ -106,17 +69,17 @@ def get_sql_items(user_query):
     parameters = []
 
     sql_query = '''SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4, Player, Competition, Season FROM Goals
-                WHERE PlayerID=(SELECT PlayerID FROM test_Players
-                WHERE test_Players MATCH (?))'''
+                WHERE PlayerID=(SELECT PlayerID FROM Players
+                WHERE ? COLLATE NOCASE IN (FullName, DistinctFirst, DistinctLast, AltName1, AltName2))'''
 
     player_name = user_query[0].strip()
     parameters.append(player_name)
 
-    # if(query[1]):
     if 0 <= 1 < len(user_query):
         opponent = user_query[1].strip()
+
         sql_query += ''' AND MatchID IN (SELECT MatchID FROM Matches WHERE TeamID=(
-                        SELECT TeamID FROM test_Teams WHERE test_Teams MATCH (?)))'''
+                        SELECT TeamID FROM Teams WHERE ? COLLATE NOCASE IN (FullName, Acronym, ShortName1, ShortName2, ShortName3)))'''
 
         parameters.append(opponent)
 
@@ -152,37 +115,28 @@ def run_bot(reddit):
                         print('invalid user query')
                         continue
 
-                    # body = body[start_index + len('!goalbot '):]  # len('!goalbot ') == 9
-                    # end_index = body.find('\n')
-                    # if end_index == -1:
-                    #     query = body
-                    # else:
-                    #     query = body[:end_index]
-
                     print('user query: {}'.format(user_query))
 
                     sql = get_sql_items(user_query)
                     sql_query = sql[0]
                     sql_parameters = sql[1]
 
-                    #reply = get_urls(user_query)
                     reply = get_urls(sql_query, sql_parameters)
 
-                except Exception as e:  # fix
-                    print(e)
+                except Exception as e:
+                    print('error: {}'.format(e))
 
                 else:
                     if reply:
 
                         try:
                             comment.reply(reply)
-                            print('reply made at {}'.format(str(datetime.now().time())))
+                            #print('reply made at {}'.format(str(datetime.now().time())))
+                            print('reply made at {}'.format(datetime.now().strftime('%H:%M:%S %m/%d/%y')))
 
                             with open('commented.txt', 'a+') as outfile:
                                 outfile.write(comment.id + '\n')
 
-                            # print('waiting 20 seconds')
-                            #print(str(datetime.now().time()))
                             print('***********************')
                             sleep(20)
 
@@ -205,23 +159,23 @@ def run_bot(reddit):
             else:
                 print('seen')
 
-# def main():
-#     reddit = authenticate()
-#     while True:
-#         try:
-#             run_bot(reddit)
-#         except prawcore.exceptions.ServerError as http_error:
-#             print(http_error)
-#             print('waiting 2 minutes')  #reduce server load
-#             sleep(120)
-#         except prawcore.exceptions.ResponseException as response_error:
-#             print(response_error)
-#             print('waiting 2 minutes')
-#             sleep(120)
-#         except Exception as e:
-#             print('error: {}'.format(e))
-#             print('waiting 2 minutes')
-#             sleep(120)
-#
-# if __name__ == '__main__':
-#     main()
+def main():
+    reddit = authenticate()
+    while True:
+        try:
+            run_bot(reddit)
+        except prawcore.exceptions.ServerError as http_error:
+            print(http_error)
+            print('waiting 2 minutes')  #reduce server load
+            sleep(120)
+        except prawcore.exceptions.ResponseException as response_error:
+            print(response_error)
+            print('waiting 2 minutes')
+            sleep(120)
+        except Exception as e:
+            print('error: {}'.format(e))
+            print('waiting 2 minutes')
+            sleep(120)
+            
+if __name__ == '__main__':
+    main()

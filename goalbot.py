@@ -95,7 +95,6 @@ def get_sql_items(user_query):
 
     return sql_query, parameters
 
-
 def run_bot(reddit):
     print('Getting comments')
 

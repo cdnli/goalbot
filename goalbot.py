@@ -39,6 +39,7 @@ def get_urls(sql_query, parameters):
     reply += FOOTER
     return reply
 
+
 def parse_body(body):
     start_index = body.find('!goalbot ')
     body = body[start_index + 9:]    # len('!goalbot ') == 9
@@ -57,6 +58,7 @@ def parse_body(body):
         return ''
 
     return query
+
 
 def get_sql_items(user_query):
     if user_query[0].strip() == 'random':
@@ -159,6 +161,7 @@ def run_bot(reddit):
             else:
                 print('seen')
 
+                
 def main():
     reddit = authenticate()
     while True:
@@ -176,6 +179,7 @@ def main():
             print('error: {}'.format(e))
             print('waiting 2 minutes')
             sleep(120)
+            
             
 if __name__ == '__main__':
     main()

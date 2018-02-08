@@ -49,6 +49,8 @@ def parse_body(body):
     if end_index != -1:
         body = body[:end_index]
 
+    print('user query: {}'.format(body))
+
     query = body.split(',')
 
     if len(query) < 2 and query[0].strip() != 'random':
@@ -95,6 +97,7 @@ def get_sql_items(user_query):
 
     return sql_query, parameters
 
+
 def run_bot(reddit):
     print('Getting comments')
 
@@ -117,7 +120,7 @@ def run_bot(reddit):
                         print('invalid user query')
                         continue
 
-                    print('user query: {}'.format(user_query))
+                    #print('user query: {}'.format(user_query))
 
                     sql = get_sql_items(user_query)
                     sql_query = sql[0]
@@ -161,7 +164,7 @@ def run_bot(reddit):
             else:
                 print('seen')
 
-                
+
 def main():
     reddit = authenticate()
     while True:
@@ -179,7 +182,7 @@ def main():
             print('error: {}'.format(e))
             print('waiting 2 minutes')
             sleep(120)
-            
+
             
 if __name__ == '__main__':
     main()

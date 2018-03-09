@@ -7,7 +7,6 @@ from datetime import datetime
 
 FOOTER = '''___\n\n
 ^^[About](https://redd.it/7kfrvj)
-^^| ^^[Creator](https://reddit.com/u/MUFColin) 
 ^^| ^^[Feedback](/r/goalbot) 
 ^^| ^^[Donate](https://www.reddit.com/r/goalbot/wiki/donate)'''
 

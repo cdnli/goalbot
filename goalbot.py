@@ -92,8 +92,8 @@ def get_sql_items(user_query):
         sql_query += ' AND (Season LIKE ?)'
         parameters.append(season)
 
-    sql_query += ';'
-
+    sql_query += ' ORDER BY GoalDate, GoalNum;'
+    
     return sql_query, parameters
 
 

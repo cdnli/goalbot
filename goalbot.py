@@ -17,7 +17,6 @@ def authenticate():
 
     return reddit
 
-# todo move old comments to new table~~
 
 def run_bot(reddit):
     print('Fetching 100 recent comments')
@@ -32,8 +31,6 @@ def run_bot(reddit):
             if not new_comment(comment.id):
                 print('seen')
                 continue
-
-            #log_seen_comment(comment)
 
             if '!goalbot ' in body:
                 print('found goal comment: {}'.format(comment.permalink))
@@ -52,7 +49,6 @@ def run_bot(reddit):
 
             #maybe split up into build_reply & make_reply
             reply(comment, query, parsed_comment)
-
 
 
 def new_comment(id):
@@ -94,8 +90,6 @@ def parse_comment(body, comment_type):
 
         if len(query) < 2:
             return []
-
-    #print(query)
     
     query = list(map(str.strip, query))
 
@@ -192,7 +186,6 @@ def build_match_query(user_query):
         return ''
 
     if user_query[0] == 'random':
-        #todo test random rows being empty here
         return '''
             SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4,
                 p.FullName,
@@ -209,12 +202,6 @@ def build_match_query(user_query):
             );
         '''
 
-
-
-    # todo
-    #   add competition
-    #   thoroughly test
-    #   fix season parsing~~
     sql_query = '''
         SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4,
                 p.FullName,
@@ -231,6 +218,7 @@ def build_match_query(user_query):
                 WHERE ? COLLATE NOCASE IN (FullName, Acronym, ShortName1, ShortName2, ShortName3)
             ) 
             AND Season LIKE ?'''
+
     if user_query_length > 2 and user_query[2]:
         sql_query += ' AND Location like ?'
 
@@ -247,11 +235,8 @@ def build_assist_query(user_query):
     if user_query_length == 0:
         return ''
 
-    # todo(?)
     # if user_query[0] == 'random':
     #   pass
-
-
 
     sql_query = '''
         SELECT GfyID, AltGfy1, AltGfy2, AltGfy3, AltGfy4,
@@ -275,22 +260,17 @@ def build_assist_query(user_query):
     if user_query_length > 2:
         sql_query += ' and m.Season LIKE ?'
 
-
     sql_query += ' ORDER BY g.GoalDate, CAST(g.GoalNum AS INTEGER);'
-
 
     return sql_query
 
 
 def reply(comment, query, parameters):
-    #fix
     if parameters == ['random']:
         parameters = []
 
-
     con = sqlite3.connect('bottest.db')
     c = con.cursor()
-
 
     rows = c.execute(query, tuple(parameters))
 
@@ -335,14 +315,14 @@ def reply(comment, query, parameters):
                 goals_against = x
 #                first_team, second_team = second_team, first_team
 
-            # todo update to 3.7(?) to get the python equivalent of js template literals
+            # todo update to 3.6(?) to get the python equivalent of js template literals
             # ex. Man Utd 8-2 Arsenal (Premier League) 28 August 2011
             reply += '**{} {}-{} {} ({}) {}**\n\n'.format(first_team, goals_for, goals_against, second_team,
                                                                competition, season)
             current_match_id = match_id
             #goal_count = 1  # todo(ne) eventually replace with minute of goal in match (if available)
 
-        # todo simplify (neen to convert from None) & move above
+        # todo simplify (need to convert from None) & move above
         if minute:
             minute = " '" + minute
         else:
@@ -357,7 +337,7 @@ def reply(comment, query, parameters):
 
         reply += '[{}{}{}](https://gfycat.com/{})'.format(full_name, pen_or_og, minute, gfy_ids[0])
 
-        #todo prevent filling list with nulls(?)
+
         for angle in range(1, len(gfy_ids)):
             if gfy_ids[angle]:
                 reply += ', [Alt{}](https://gfycat.com/{})'.format(angle, gfy_ids[angle])
@@ -404,15 +384,12 @@ def log_seen_comment(comment):
     con = sqlite3.connect('bottest.db')
     c = con.cursor()
 
-    #todo add safety check in case already there(?)
     query = 'INSERT INTO Commented (id, username) VALUES (?, ?);'
 
     parameters = [comment.id, comment.author.name]
 
     c.execute(query, tuple(parameters))
     con.commit()
-
-    #print('logged comment {} by {}'.format(comment.id, comment.author.name))
 
 
 def increment_referenced_goals_count(gfy_ids):
@@ -425,9 +402,6 @@ def increment_referenced_goals_count(gfy_ids):
     c = con.cursor()
     c.execute(query)
     con.commit()
-
-
-
 
 
 if __name__ == '__main__':
@@ -447,10 +421,10 @@ if __name__ == '__main__':
             print('waiting 2 minutes')
             sleep(120)
 
-        #except Exception as e:
-            #print('error: {}'.format(e))
-            #print('waiting 30 seconds')
-            #sleep(30)
+        except Exception as e:
+            print('error: {}'.format(e))
+            print('waiting 5 minutes')  #likely internet issue
+            sleep(300)
 
         finally:
             print('retrying')

@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "discord.js": "github:discordjs/discord.js",
+    "sqlite3": "^5.0.2"
+  }
+}
